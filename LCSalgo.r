@@ -1,0 +1,176 @@
+#samples without replacement so that way the characters are not repeated
+#this function is meant to be used with bruteforce
+#since brute force does not have memorization 
+#and will count a repeating character twice
+MakeRandomString <- function(n=1, len)
+{
+  randomString <- c(1:n)         # initialize vector
+  for (i in 1:n)
+  {
+    randomString[i] <- paste(sample(c(LETTERS),
+                                    len, replace=FALSE),
+                             collapse="")
+  }
+  return(randomString)
+}
+#uses replacement, meant for DP method where memorization is 
+#used and can keep track of repeating characters
+MRS <- function(n=1, len)
+{
+  randomString <- c(1:n)         # initialize vector
+  for (i in 1:n)
+  {
+    randomString[i] <- paste(sample(c(LETTERS),
+                                    len, replace=TRUE),
+                             collapse="")
+  }
+  return(randomString)
+}
+
+#DP version
+lcsLENGTH<-function(x1,y1,m,n)
+{
+  
+  c<-matrix(nrow=m+1,ncol=n+1)
+  b<-matrix(nrow=m+1,ncol=n+1)
+  for(i in 1:m+1){
+    c[i,1]=0
+  }
+  for(j in 1:m+1){
+    c[1,j]=0
+  }
+  c[1,1]=0
+  
+  mm<-m+1
+  nn<-n+1
+  
+  for(i in 2:mm){
+    for(j in 2:nn){
+      if(x1[i-1]==y1[j-1]){
+        c[i,j]=c[i-1,j-1]+1
+        b[i,j]=paste("\\")
+      }
+      else if(c[i-1,j]>=c[i,j-1]){
+        c[i,j]=c[i-1,j]
+        b[i,j]=paste("|")
+      }
+      else{
+        c[i,j]=c[i,j-1]
+        b[i,j]=paste("-")
+      }
+    }
+  }
+  df<-list(c,b)
+  return(df)
+}
+
+#prints LCS for DP
+printLCS<-function(b,x,i,j,a){
+  char<-paste("\\")
+  if(i==1 || j==1)
+    return(a)
+  if(b[i,j]==char)
+  {
+    a<-paste(x[i-1],a)
+    printLCS(b,x,i-1,j-1,a)
+  }
+  else if (b[i,j]=="|")
+  {
+    printLCS(b,x,i-1,j,a)
+  }
+  else
+    printLCS(b,x,i,j-1,a)
+}
+
+#Brute force
+brrueF<-function(x,y,i,j,l){
+  # if(s1[i] == s2[j])
+  #       return 1 + LCS(s1, s2, i-1, j-1)
+  #   return max(LCS(s1, s2, i-1, j), LCS(s1, s2, i, j-1))
+  if(i==0||j==0)
+  {
+    return(l)
+  }
+  if(x[i]== y[j]){
+    l<-l+1
+    brrueF(x,y,i-1,j-1,l)
+  }
+  max(brrueF(x,y,i-1,j,l),brrueF(x,y,i,j-1,l))
+}
+
+rn<-c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15)
+tim<-proc.time()
+
+#BF and DP comparision 
+
+for(i in rn)
+{
+  ptm<-proc.time()
+  x<-MakeRandomString(len=i)
+  y<-MakeRandomString(len=i)
+  x1<-paste(x)
+  x1<-strsplit(x1,"")[[1]]
+  y1<-paste(y)
+  y1<-strsplit(y1,"")[[1]]
+  print(x)
+  print(y)
+  
+  m<-nchar(x)
+  n<-nchar(y)
+  print(m)
+  res<-lcsLENGTH(x1,y1,m,n)
+  nc<-res[[1]]
+  nb<-res[[2]]
+  
+  a<-c("")
+  prin<-printLCS(nb,x1,m+1,n+1,a)
+  #print(prin)
+  prin1<-strsplit(prin,"")[[1]]
+  trlen<-length(prin1)/2
+  print(trlen)
+  nptm<-proc.time()-ptm
+  print(nptm)
+  #t<-c(t,nptm)
+  
+  l<-0
+  rr<-brrueF(x1,y1,m,n,l)
+  print(rr)
+  mptm<-proc.time()-ptm
+  print(mptm)
+  
+}
+print(tim)
+
+##LCS DP run on large data, crashes ater 2,000 string length
+rn1<-c(100,200,300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500,1600,1700,1800,1900,2000)
+tim1<-proc.time()
+
+for(i in rn1)
+{
+  ptm<-proc.time()
+  x2<-MRS(len=i)
+  y2<-MRS(len=i)
+  x21<-paste(x2)
+  x21<-strsplit(x21,"")[[1]]
+  y21<-paste(y2)
+  y21<-strsplit(y21,"")[[1]]
+  
+  mm<-nchar(x2)
+  nn<-nchar(y2)
+  print(mm)
+  res<-lcsLENGTH(x21,y21,mm,nn)
+  nc1<-res[[1]]
+  nb1<-res[[2]]
+  
+  a<-c("")
+  prin<-printLCS(nb1,x21,mm+1,nn+1,a)
+  #print(prin)
+  prin1<-strsplit(prin,"")[[1]]
+  trlen<-length(prin1)/2
+  print(trlen)
+  nptm<-proc.time()-ptm
+  print(nptm)
+  #t<-c(t,nptm)
+  
+}
+print(tim1)
